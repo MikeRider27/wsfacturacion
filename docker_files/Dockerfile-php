@@ -1,0 +1,16 @@
+FROM php:7.3.3-apache
+RUN apt-get update && apt-get install -y libpq-dev
+RUN apt-get install -y libpng-dev
+# Damos permisos de lectura a otros roles para evitar `Temporary failure resolving 'deb.debian.org'`
+# RUN chmod o+r /etc/resolv.conf
+# Instalamos yaml
+RUN apt-get -y install gcc make autoconf libc-dev pkg-config
+RUN apt-get -y install libyaml-dev
+RUN pecl install yaml
+# Activamos postgres en el php
+RUN docker-php-ext-install pgsql pdo_pgsql
+RUN docker-php-ext-install gd
+# Activamos el modulo rewrite en el php.ini
+RUN a2enmod rewrite
+# Reiniciamos el apache
+RUN service apache2 restart
