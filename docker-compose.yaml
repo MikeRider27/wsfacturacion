@@ -13,7 +13,7 @@ services:
       - ./apache/apache2.conf:/etc/apache2/apache2.conf
       - ./apache/mods-available/mpm_prefork.conf:/etc/apache2/mods-available/mpm_prefork.conf
     ports:
-      - 3000:80
+      - 8056:80
     networks:
       - app
  

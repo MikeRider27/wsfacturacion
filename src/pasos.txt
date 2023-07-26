@@ -1,0 +1,4 @@
+//Paso 1 - Crear el XML Campos + Datos,
+//Paso 2 - Firmar el XML(Certificado Digital),
+//Paso 3 - Enviar el XML firmado al SET,
+
