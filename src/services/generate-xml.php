@@ -1,10 +1,24 @@
 <?php
+//require 'ConstanteService.php';
+require 'addDefaultValues.php';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Versión del esquema XML
+    $version = '150';
     // Obtener el JSON enviado a través del POST
     $json_data = file_get_contents('php://input');
 
     // Convertir el JSON a un arreglo asociativo
     $data = json_decode($json_data, true);
+
+    // Crea una instancia de la clase addDefaultValues
+    $addDefaultValues = new addDefaultValues();
+ 
+
+    // Llama a la función DefaultValues y pasa el array $data por referencia
+    $addDefaultValues->DefaultValues($data);
+   
+    
 
     // Función para convertir un arreglo asociativo a XML
     function array_to_xml($data, &$xml_data) {
@@ -22,8 +36,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Crear el objeto XML
-    $xml_data = new SimpleXMLElement('<?xml version="1.0"?><data></data>');
-
+    $xml_data = new SimpleXMLElement('<?xml version="1.0" encoding="utf-8" ?><rDE></rDE>');
+        
+    // Agregar los atributos al elemento raíz
+    $xml_data->addAttribute('xmlns', 'http://ekuatia.set.gov.py/sifen/xsd');
+    $xml_data->addAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
+    $xml_data->addAttribute('xsi:schemaLocation', 'https://ekuatia.set.gov.py/sifen/xsd/siRecepDE_v150.xsd');
+    // Agregar el elemento dVerFor
+    $xml_data->addChild('dVerFor', $version);
+    
     // Convertir el arreglo asociativo a XML
     foreach ($data as $item) {
         array_to_xml($item, $xml_data);
@@ -37,11 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Obtener el XML como una cadena
     $xml_string = $dom->saveXML();
-
-    // Establecer los encabezados para indicar que la respuesta es XML
-    header('Content-type: text/xml');
-    header('Content-Disposition: attachment; filename="resultado.xml"');
-
+    
     // Imprimir el resultado (puedes enviarlo a través de una respuesta HTTP si lo prefieres)
     echo $xml_string;
 }
