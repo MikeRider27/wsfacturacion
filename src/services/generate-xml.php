@@ -1,5 +1,5 @@
 <?php
-//require 'ConstanteService.php';
+
 require 'addDefaultValues.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -12,13 +12,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode($json_data, true);
 
     // Crea una instancia de la clase addDefaultValues
-    $addDefaultValues = new addDefaultValues();
- 
+    $addDefaultValues = new addDefaultValues(); 
 
     // Llama a la función DefaultValues y pasa el array $data por referencia
-    $addDefaultValues->DefaultValues($data);
-   
-    
+    $addDefaultValues->DefaultValues($data);    
 
     // Función para convertir un arreglo asociativo a XML
     function array_to_xml($data, &$xml_data) {
