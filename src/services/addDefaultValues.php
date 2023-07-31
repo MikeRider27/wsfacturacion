@@ -5,14 +5,11 @@ class addDefaultValues {
 
     public function DefaultValues(&$data) {
 
-        //var_dump($data);
-        $tipo = $data[0]['tipoDocumento'];
-        var_dump($tipo);
+        $tipoDocumento = $data[0]['tipoDocumento'];
         $constanteServiceInstance = new ConstanteService();
+        $tiposDocumentos = $constanteServiceInstance->getTiposDocumentos();
 
-        // Verifica si el tipo de documento es válido
-        $tipoDocumento = isset($data['tipoDocumento']) ? intval($data['tipoDocumento']) : null;
-        echo $tipoDocumento;
 
+       
     }
 }
