@@ -1,12 +1,14 @@
 <?php
-require 'ConstanteService.php';
+require 'ConstantsService.php';
 
 class addDefaultValues {
 
     public function DefaultValues(&$data) {
 
         $tipoDocumento = $data[0]['tipoDocumento'];
-        $constanteServiceInstance = new ConstanteService();
+
+        var_dump($tipoDocumento);
+        $constanteServiceInstance = new ConstantService();
         $tiposDocumentos = $constanteServiceInstance->getTiposDocumentos();
 
 

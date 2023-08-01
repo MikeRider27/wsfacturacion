@@ -1,5 +1,4 @@
 <?php
-
 require 'addDefaultValues.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -21,31 +20,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     function array_to_xml($data, &$xml_data) {
         foreach ($data as $key => $value) {
             if (is_array($value)) {
+                // Verificar si el valor es un elemento singular o una lista de elementos
                 if (is_numeric($key)) {
-                    $key = 'item';
+                    // Si es una lista de elementos, no crear un nuevo elemento para cada uno
+                    array_to_xml($value, $xml_data);
+                } else {
+                    // Si es un elemento singular, crear un nuevo elemento con el nombre $key
+                    $subnode = $xml_data->addChild($key);
+                    array_to_xml($value, $subnode);
                 }
-                $subnode = $xml_data->addChild($key);
-                array_to_xml($value, $subnode);
             } else {
                 $xml_data->addChild($key, htmlspecialchars($value));
             }
         }
     }
 
-    // Crear el objeto XML
+    // Crear el objeto XML con la estructura deseada
     $xml_data = new SimpleXMLElement('<?xml version="1.0" encoding="utf-8" ?><rDE></rDE>');
-        
+
     // Agregar los atributos al elemento raíz
     $xml_data->addAttribute('xmlns', 'http://ekuatia.set.gov.py/sifen/xsd');
-    $xml_data->addAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
     $xml_data->addAttribute('xsi:schemaLocation', 'https://ekuatia.set.gov.py/sifen/xsd/siRecepDE_v150.xsd');
+    $xml_data->addAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
+
     // Agregar el elemento dVerFor
     $xml_data->addChild('dVerFor', $version);
+
+    // Agregar la estructura 'DE' con atributo 'Id'
+    $de_element = $xml_data->addChild('DE');
+    $de_element->addAttribute('Id', '01');
     
-    // Convertir el arreglo asociativo a XML
-    foreach ($data as $item) {
-        array_to_xml($item, $xml_data);
-    }
+
+    // Convertir el arreglo asociativo a XML dentro del elemento 'DE'
+    array_to_xml($data, $de_element);
 
     // Formatear el XML para que sea más legible
     $dom = new DOMDocument('1.0');
@@ -55,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Obtener el XML como una cadena
     $xml_string = $dom->saveXML();
-    
+
     // Imprimir el resultado (puedes enviarlo a través de una respuesta HTTP si lo prefieres)
     echo $xml_string;
 }

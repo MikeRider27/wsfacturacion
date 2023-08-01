@@ -1,6 +1,6 @@
 <?php 
 
-class ConstanteService {
+class ConstantService {
 
     //Constantes de la aplicación
     public $tiposDocumentos = [
