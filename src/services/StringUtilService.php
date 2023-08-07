@@ -1,11 +1,7 @@
 <?php
-
 class StringUtilService {
     public function leftZero($value, $size) {
-        $s = (string)$value;
-        while (strlen($s) < $size) {
-            $s = '0' . $s;
-        }
-        return $s;
+        return str_pad($value, $size, '0', STR_PAD_LEFT);
     }
 }
+?>

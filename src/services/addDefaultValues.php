@@ -28,7 +28,7 @@ class addDefaultValues {
 
             $errorMensaje = [
                 'success' => false,
-                'error' => "Error en el campo tipoDocumento. Los valores válidos son: " . implode(', ', $valoresValidos) . "."
+                'error' => "Tipo de Documento $tipoDocumento no válido. Los valores válidos son: " . implode(', ', $valoresValidos) . "."
             ];
 
            echo json_encode($errorMensaje);

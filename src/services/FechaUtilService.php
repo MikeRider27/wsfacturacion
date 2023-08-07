@@ -1,7 +1,4 @@
 <?php
-
-require_once 'StringUtilService.php'; // Assuming you have defined StringUtilService with leftZero function
-
 class FechaUtilService {
     private $stringUtilService;
 
@@ -11,18 +8,18 @@ class FechaUtilService {
 
     public function convertToAAAAMMDD($fecha) {
         $year = $fecha->format('Y');
-        $month = $this->stringUtilService->leftZero($fecha->format('n'), 2);
-        $day = $this->stringUtilService->leftZero($fecha->format('j'), 2);
+        $month = str_pad($fecha->format('n'), 2, '0', STR_PAD_LEFT);
+        $day = str_pad($fecha->format('j'), 2, '0', STR_PAD_LEFT);
         return $year . $month . $day;
     }
 
     public function convertToJSONFormat($fecha) {
         $year = $fecha->format('Y');
-        $month = $this->stringUtilService->leftZero($fecha->format('n'), 2);
-        $day = $this->stringUtilService->leftZero($fecha->format('j'), 2);
-        $hours = $this->stringUtilService->leftZero($fecha->format('G'), 2);
-        $minutes = $this->stringUtilService->leftZero($fecha->format('i'), 2);
-        $seconds = $this->stringUtilService->leftZero($fecha->format('s'), 2);
+        $month = str_pad($fecha->format('n'), 2, '0', STR_PAD_LEFT);
+        $day = str_pad($fecha->format('j'), 2, '0', STR_PAD_LEFT);
+        $hours = str_pad($fecha->format('G'), 2, '0', STR_PAD_LEFT);
+        $minutes = str_pad($fecha->format('i'), 2, '0', STR_PAD_LEFT);
+        $seconds = str_pad($fecha->format('s'), 2, '0', STR_PAD_LEFT);
 
         return $year . '-' . $month . '-' . $day . 'T' . $hours . ':' . $minutes . ':' . $seconds;
     }
@@ -35,4 +32,4 @@ class FechaUtilService {
         return (bool)preg_match('/\d{4}-\d{2}-\d{2}/', $str);
     }
 }
-
+?>
