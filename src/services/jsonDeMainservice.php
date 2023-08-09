@@ -1358,7 +1358,7 @@ class JSonDeMainService {
 
           $errorMensaje = [
               'success' => false,
-              'error' => "Tipo de Documento ". $$data[0]['tipoDocumento']." no válido. Los valores válidos son: " . implode(', ', $valoresValidos) . "."
+              'error' => "Tipo de Documento ". $data[0]['tipoDocumento']." no válido. Los valores válidos son: " . implode(', ', $valoresValidos) . "."
           ];
 
          echo json_encode($errorMensaje);
