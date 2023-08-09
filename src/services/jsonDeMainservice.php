@@ -14,7 +14,7 @@ class JSonDeMainService {
     private $stringUtilService;
 
     public function __construct() {
-        $this->stringUtilService = new StringUtilService();
+        $this->stringUtilService = new StringUtilService();        
         
     }
 
@@ -22,12 +22,13 @@ class JSonDeMainService {
       $this->addDefaultValues($data); 
       
       //echo $data['tipoDocumento'];
- 
-        $this->generateCodigoControl($params, $data);     
-        $DE = $this->generateDe($params, $data);
-        $DatOp = $this->generateDatosOperacion($params, $data);
-        $Timb = $this->generateDatosTimbrado($params, $data);
-       
+
+      $this->generateCodigoControl($params, $data);   
+      $DE = $this->generateDe($params, $data);
+      $DatOp = $this->generateDatosOperacion($params, $data);
+      $Timb = $this->generateDatosTimbrado($params, $data);
+      $DatGen = $this->generateDatosGenerales($params, $data);
+      //var_dump($DatGen);
         
         
         // Crear el objeto XML con la estructura deseada
@@ -45,27 +46,26 @@ class JSonDeMainService {
         
         // Agregar la estructura 'DE' con atributo 'Id'
         $de_element = $xml_data->addChild('DE');
-        $de_element->addAttribute('Id', $DE['$']['Id']);
+        $de_element->addAttribute('Id', $this->codigoControl);
+        $this->array_to_xml($DE, $de_element);
 
-        // Agregar el elemento dDVId, dFecFirma y dSisFact
-        $de_element->addChild('dDVId', $DE['dDVId']);
-        $de_element->addChild('dFecFirma', $DE['dFecFirma']);
-        $de_element->addChild('dSisFact', $DE['dSisFact']);
+      
 
         // Agregar la estructura gOpeDE
-        $gOpeDE_element = $de_element->addChild('gOpeDE');
-        $gOpeDE_element->addChild('iTipEmi', $DatOp['gOpeDE']['iTipEmi']);
-        $gOpeDE_element->addChild('iTipDE', $DatOp['gOpeDE']['dDesTipEmi']);
-        $gOpeDE_element->addChild('dCodSeg', $DatOp['gOpeDE']['dCodSeg']);
-        //$gOpeDE_element->addChild('dInfoEmi', $DatOp['gOpeDE']['dInfoEmi']);
-        //$gOpeDE_element->addChild('dInfoFisc', $DatOp['gOpeDE']['dInfoFisc']);
+        $gOpeDE_element = $de_element->addChild('gOpeDE');   
+        $this->array_to_xml($DatOp, $gOpeDE_element);
 
         // Agregar la estructura gTimb
-        $gTimb_element = $de_element->addChild('gTimb');
-        $gTimb_element->addChild('iTiDE', $Timb['gTimb']['iTiDE']);
-        $gTimb_element->addChild('dDesTiDE', $Timb['gTimb']['dDesTiDE']);
-        $gTimb_element->addChild('dNumTim', $Timb['gTimb']['dNumTim']);
-        $gTimb_element->addChild('dEst', $Timb['gTimb']['dEst']);
+        $gTimb_element = $de_element->addChild('gTimb'); 
+        $this->array_to_xml($Timb, $gTimb_element);
+        
+        // // Agregar la estructura gDatGen
+        $gDatGen_element = $de_element->addChild('gDatGralOpe');
+        $this->array_to_xml($DatGen, $gDatGen_element);
+       // $gDatGen_element->addChild('dFeEmiDE', $DatGen['gDatGralOpe']['dFeEmiDE']); // 
+
+
+
 
         // Agregar la estructura Signature debajo de DE
         // $xml_data->addChild('Signature', null, 'http://www.w3.org/2000/09/xmldsig#');
@@ -89,7 +89,7 @@ class JSonDeMainService {
     }
 
     // Función para convertir un arreglo asociativo a XML
-    /*private function array_to_xml($data, &$xml_data) {
+    private function array_to_xml($data, &$xml_data) {
         foreach ($data as $key => $value) {
             if (is_array($value)) {
                 // Verificar si el valor es un elemento singular o una lista de elementos
@@ -105,7 +105,7 @@ class JSonDeMainService {
                 $xml_data->addChild($key, htmlspecialchars($value));
             }
         }
-    }*/
+    }
 
     /**
      * Genera el CDC para la Factura
@@ -156,10 +156,7 @@ class JSonDeMainService {
       
       $digitoVerificadorString = (string)$this->codigoControl;
       
-      $jsonResult = array(
-          '$' => array(
-              'Id' => $id,
-          ),
+      $jsonResult = array(          
           'dDVId' => substr($digitoVerificadorString, -1),
           'dFecFirma' => date('Y-m-d', strtotime('now')),
           'dSisFact' => 1,
@@ -200,7 +197,7 @@ class JSonDeMainService {
       
       $codigoSeguridadAleatorio = $this->codigoSeguridad;
       $ConstantService = new ConstantService();      
-      $tiposEmisiones = $ConstantService->tiposEmisiones;
+      $tiposEmisiones = $ConstantService->getTiposEmisiones();
 
       $tipoEmisionValido = false;
       
@@ -221,20 +218,18 @@ class JSonDeMainService {
         );*/
       }
 
-      $json = array(        
-            'gOpeDE' => array(
+      $json = array(          
               'iTipEmi' => $data[0]['tipoEmision'],
               'dDesTipEmi' => $data[0]['tipoEmisionDescripcion'],
-              'dCodSeg' => $codigoSeguridadAleatorio,
-            )
+              'dCodSeg' => $codigoSeguridadAleatorio,          
       ); 
       
       if (isset($data[0]['observacion']) && strlen($data[0]['observacion']) > 0) {
-        $json['gOpeDE']['dInfoEmi'] = $data[0]['observacion'];
+        $json['dInfoEmi'] = $data[0]['observacion'];
       }
 
       if (isset($data[0]['descripcion']) && strlen($data[0]['descripcion']) > 0) {
-        $json['gOpeDE']['dInfoFisc'] = $data[0]['descripcion'];
+        $json['dInfoFisc'] = $data[0]['descripcion'];
       }
     
       return $json;
@@ -257,19 +252,519 @@ class JSonDeMainService {
      * @param data 
      * @param options 
     */
-    private function generateDatosTimbrado($params, $data) {     
-      $json = array(
-        'gTimb' => array(
-          'iTiDE' => $data[0]['tipoDocumento'],
-          'dDesTiDE' => $data[0]['tipoDocumentoDescripcion'],
-          'dNumTim' => $params['timbradoNumero'],
-          'dEst' => $this->stringUtilService->leftZero($data[0]['establecimiento'], 3),
+    private function generateDatosTimbrado($params, $data) {
+      $json = [         
+              'iTiDE' => $data[0]['tipoDocumento'],
+              'dDesTiDE' => $data[0]['tipoDocumentoDescripcion'],
+              'dNumTim' => $params['timbradoNumero'],
+              'dEst' => $this->stringUtilService->leftZero($data[0]['establecimiento'], 3),
+              'dPunExp' => $this->stringUtilService->leftZero($data[0]['punto'], 3),
+              'dNumDoc' => $this->stringUtilService->leftZero($data[0]['numero'], 7),         
+      ];
+  
+      if (isset($data[0]['items'][0]['numeroSerie'])) {
+          $json['dSerieNum'] = $data[0]['items'][0]['numeroSerie'];
+      } elseif (isset($data[0]['serie'])) {
+          $json['dSerieNum'] = $data[0]['items'][0]['numeroSerie'];
+      }
+      $json['dFeIniT'] = substr($params['timbradoFecha'], 0, 10);
+
+        return $json;
+    }
+    
+    /**
+      * Genera los campos generales, divide las actividades en diferentes métodos
+      *
+      * <gDatGralOpe>
+      *     <dFeEmiDE>2020-05-07T15:03:57</dFeEmiDE>
+      * </gDatGralOpe>
+      *
+      * @param array $params
+      * @param array $data
+      * @param XmlgenConfig $config
+    */
+    private function generateDatosGenerales($params, $data) {
+      $json = [       
+          'dFeEmiDE' => $data[0]['fecha'],        
+      ];
+      
+      $json['gOpeCom'] = $this->generateDatosGeneralesInherentesOperacion($params, $data);
+      $json['gEmis'] = $this->generateDatosGeneralesEmisorDE($params, $data);
+      
+      //if($data[0]['usuario']){
+      //  $json['gRespDE'] = $this->generateDatosGeneralesResponsableGeneracionDE($params, $data);
+      //}
+
+      $json['gDatRec'] = $this->generateDatosGeneralesReceptorDE($params, $data);
+
+
+  
+     // 
+     // if ($config->userObjectRemove == false) {
+     //   // Si está TRUE no crea el objeto usuario
+     //   if ($data['usuario']) {
+     //     // No es obligatorio
+     //     $this->generateDatosGeneralesResponsableGeneracionDE($params, $data);
+     //   }
+     // }
+     // $this->generateDatosGeneralesReceptorDE($params, $data);
+
+     return $json;
+    
+    }
+
+     /**
+     * D1. Campos inherentes a la operación comercial (D010-D099)
+     * Pertenece al grupo de datos generales
+     * 
+     * <gOpeCom>
+     *       <iTipTra>1</iTipTra>
+     *       <dDesTipTra>Venta de mercadería</dDesTipTra>
+     *       <iTImp>1</iTImp>
+     *       <dDesTImp>IVA</dDesTImp>
+     *       <cMoneOpe>PYG</cMoneOpe>
+     *       <dDesMoneOpe>Guarani</dDesMoneOpe>
+     *   </gOpeCom>
+     * @param params 
+     * @param data
+     */
+    private function generateDatosGeneralesInherentesOperacion($params, $data) {
+      if ($data[0]['tipoDocumento'] == 7) {
+          // C002
+          return; // No informa si el tipo de documento es 7
+      }
+      $ConstantService = new ConstantService(); 
+      $tiposTransacciones = $ConstantService->getTiposTransacciones();
+      $tiposImpuestos = $ConstantService->getTiposImpuestos();
+      $monedas = $ConstantService->getMonedas();
+      $globalPorItem = $ConstantService->getGlobalPorItem();
+  
+      $moneda = $data[0]['moneda'];
+      if (!$moneda) {
+          $moneda = 'PYG';
+      }
+  
+      $json = array();
+    
+
+      if($data[0]['tipoDocumento'] == 1 || $data[0]['tipoDocumento'] == 4) {
+        // Obligatorio informar iTipTra D011
+        if (!$data[0]['tipoTransaccion']) {
+          $error = 'Debe proveer el Tipo de Transacción en data.tipoTransaccion';
+          echo json_encode($error);
+          exit;
+        }
         
-        )
-      );
+        $json['iTipTra'] = $data[0]['tipoTransaccion'];
+        foreach ($tiposTransacciones as $um) {
+          if ($um['codigo'] === $data[0]['tipoTransaccion']) {
+              $json['dDesTipTra'] = $um['descripcion'];            
+              break;
+          }
+        }
+      }
+
+      $json['iTImp'] = $data[0]['tipoImpuesto']; // D013
+      foreach ($tiposImpuestos as $um) {
+        if ($um['codigo'] === $data[0]['tipoImpuesto']) {
+            $json['dDesTImp'] = $um['descripcion'];            
+            break;
+        }
+      }
+
+      $json['cMoneOpe'] = $moneda; // D015
+      foreach ($monedas as $um) {
+        if ($um['codigo'] === $moneda) {
+            $json['dDesMoneOpe'] = $um['descripcion'];            
+            break;
+        }
+      }
+
+      if($moneda != 'PYG') {
+        if (!$data[0]['tipoCambio']) {
+          $error = 'Debe proveer el Tipo de Cambio en data.tipoCambio';
+          echo json_encode($error);
+          exit;
+        }
+        //Obligatorio informar dCondTiCam D017
+        $json['dCondTiCam'] = $data[0]['condicionTipoCambio'];
+      }
+
+      if(isset($data[0]['cambio']) && $data[0]['cambio'] > 0) {
+        if ($data[0]['condicionTipoCambio'] == 1 && $moneda != 'PYG') {
+          if (!($data[0]['cambio'] && $data[0]['cambio'] > 0)) {
+            $error = 'Debe proveer el valor del Cambio en data.cambio';
+            echo json_encode($error);
+            exit;
+          }
+          //Obligatorio informar dCondTiCam D018
+          $json['dTiCam'] = $data[0]['cambio'];
+        }
+      }
+  
+      if (isset($data[0]['condicionAnticipo'])) {
+        $json['iCondAnt'] = $data[0]['condicionAnticipo'];
+        foreach ($globalPorItem as $um) {
+          if ($um['codigo'] === $data[0]['condicionAnticipo']) {
+              $json['dDesCondAnt'] = 'Anticipo ' . $um['descripcion'];            
+              break;
+          }
+        }
+      }
 
       return $json;
     }
+
+    /**
+      * D2. Campos que identifican al emisor del Documento Electrónico DE (D100-D129)
+      * Pertenece al grupo de datos generales
+      *
+      * @param params
+      * @param data
+      * @param options
+      */
+    private function generateDatosGeneralesEmisorDE($params, $data) {
+      if(!$params && !$params['establecimientos']) {
+        $error = 'Debe proveer un Array con la información de los establecimientos en params';
+        echo json_encode($error);
+        exit;
+      }
+
+      $ConstantService = new ConstantService();      
+      $departamentos = $ConstantService->getDepartamentos();
+      $distritos = $ConstantService->getDistritos();
+      $ciudades = $ConstantService->getCiudades();
+
+      //Validar si el establecimiento viene en params
+      $establecimiento = $this->stringUtilService->leftZero($data[0]['establecimiento'], 3);
+      $establecimientoEncontrado = false;
+      foreach ($params['establecimientos'] as $um) {
+        if ($um['codigo'] === $establecimiento) {
+          $establecimientoEncontrado = true;
+          break;
+        }
+      }
+
+      if (!$establecimientoEncontrado) {
+        $valor = array_map(function ($um) {
+          return $um['codigo'] . '-' . $um['denominacion'];
+        }, $params['establecimientos']);
+
+        $error = [
+          'error' => 'Establecimiento ' . $establecimiento . ' no encontrado en params.establecimientos*.codigo. Valores:' . implode(', ', $valor) . '.',
+        ];
+        echo json_encode($error);
+        exit;
+      }
+
+      if (strpos($params['ruc'], '-') === false) {       
+        $error = 'RUC debe contener dígito verificador en params.ruc';
+        echo json_encode($error);
+        exit;
+      }
+
+      $json = array();
+      $ruc = explode('-', $params['ruc']);
+      $json['dRucEm'] = $ruc[0];
+      $json['dDVEmi'] = $ruc[1];
+      $json['iTipCont'] = $params['tipoContribuyente'];
+      if (isset($params['tipoRegimen'])) {
+        $json['cTipReg'] = $params['tipoRegimen'];
+      }
+      $json['dNomEmi'] = $params['razonSocial'];
+      if (isset($params['nombreFantasia']) && strlen((string)$params['nombreFantasia']) > 0) {
+        $json['dNomFanEmi'] = $params['nombreFantasia'];
+      }
+      $json['dDirEmi'] = array_filter($params['establecimientos'], function ($e) use ($establecimiento) {
+        return $e['codigo'] === $establecimiento;
+      })[0]['direccion'];
+      $json['dNumCas'] = array_filter($params['establecimientos'], function ($e) use ($establecimiento) {
+        return $e['codigo'] === $establecimiento;
+      })[0]['numeroCasa']; 
+
+      $dCompDir1 = array_filter($params['establecimientos'], function ($e) use ($establecimiento) {
+        return $e['codigo'] === $establecimiento;
+      })[0]['complementoDireccion1'];
+      
+      if ($dCompDir1 && strlen((string)$dCompDir1) > 1) {
+        $json['dCompDir1'] = $dCompDir1;
+      }
+      
+      $dCompDir2 = array_filter($params['establecimientos'], function ($e) use ($establecimiento) {
+        return $e['codigo'] === $establecimiento;
+      })[0]['complementoDireccion2'];
+      
+      if ($dCompDir2 && strlen((string)$dCompDir2) > 1) {
+        $json['dCompDir2'] = $dCompDir2;
+      }
+
+      $json['cDepEmi'] = array_filter($params['establecimientos'], function ($e) use ($establecimiento) {
+        return $e['codigo'] === $establecimiento;
+      })[0]['departamento'];          
+      
+      foreach ($departamentos as $um) {
+        if ($um['codigo'] === $json['cDepEmi']) {
+          $json['dDesDepEmi'] = $um['descripcion'];
+          break;
+        }
+      }
+
+      $json['cDisEmi'] = array_filter($params['establecimientos'], function ($e) use ($establecimiento) {
+        return $e['codigo'] === $establecimiento;
+      })[0]['distrito'];
+      
+      foreach ($distritos as $um) {
+        if ($um['codigo'] === $json['cDisEmi']) {
+          $json['dDesDisEmi'] = $um['descripcion'];
+          break;
+        }
+      }
+
+      $json['cCiuEmi'] = array_filter($params['establecimientos'], function ($e) use ($establecimiento) {
+        return $e['codigo'] === $establecimiento;
+      })[0]['ciudad'];
+
+      foreach ($ciudades as $um) {
+        if ($um['codigo'] === $json['cCiuEmi']) {
+          $json['dDesCiuEmi'] = $um['descripcion'];
+          break;
+        }
+      }
+
+      $json['dTelEmi'] = array_filter($params['establecimientos'], function ($e) use ($establecimiento) {
+        return $e['codigo'] === $establecimiento;
+      })[0]['telefono'];
+
+      if(array_filter($params['establecimientos'], function ($e) use ($establecimiento) {
+        return $e['codigo'] === $establecimiento;
+      })[0]['email']) {
+
+        $email = array_filter($params['establecimientos'], function ($e) use ($establecimiento) {
+          return $e['codigo'] === $establecimiento;
+        })[0]['email'];
+
+         //Verificar si tiene varios correos.
+        if (strpos($email, ',') !== false) {
+          //Si el Email tiene , (coma) entonces va enviar solo el primer valor, ya que la SET no acepta Comas
+          $email = explode(',', $email)[0];
+        }
+
+        $json['dEmailE'] = $email;
+      }
+
+      $json['dDenSuc'] = array_filter($params['establecimientos'], function ($e) use ($establecimiento) {
+        return $e['codigo'] === $establecimiento;
+      })[0]['denominacion'];
+
+      if (isset($params['actividadesEconomicas']) && count($params['actividadesEconomicas']) > 0) {
+        $json['gActEco'] = [];
+        foreach ($params['actividadesEconomicas'] as $actividadEconomica) {
+          $gActEco = [
+            'cActEco' => $actividadEconomica['codigo'],
+            'dDesActEco' => $actividadEconomica['descripcion'],
+          ];
+          $json['gActEco'][] = $gActEco;
+        }
+      } else {
+        $error = 'Debe proveer el array de actividades económicas en params.actividadesEconomicas';
+        echo json_encode($error);
+        exit;
+      }
+
+      return $json;
+    }
+
+    /**
+      * Datos generales del responsable de generacion del DE
+      *
+      * @param params
+      * @param data
+      * @param options
+      */
+    private function generateDatosGeneralesResponsableGeneracionDE($params, $data) {
+      $ConstantService = new ConstantService();
+      $tiposDocumentosIdentidades = $ConstantService->getTiposDocumentosIdentidades();
+
+      $json = [
+        'iTipIDRespDE' => $data[0]['usuario']['documentoTipo'],
+        'dDTipIDRespDE' => array_filter($tiposDocumentosIdentidades, function ($td) use ($data) {
+          return $td['codigo'] === $data[0]['usuario']['documentoTipo'];
+        })[0]['descripcion'],
+      ];
+
+      if ($data[0]['usuario']['documentoTipo'] == 9) {
+        $json['dDTipIDRespDE'] = $data[0]['usuario']['documentoTipoDescripcion'];
+      }
+
+      $json['dNumIDRespDE'] = $data[0]['usuario']['documentoNumero'];
+      $json['dNomRespDE'] = $data[0]['usuario']['nombre'];
+      $json['dCarRespDE'] = $data[0]['usuario']['cargo'];
+
+      return $json;
+    }
+
+    /**
+     * Datos generales del receptor del documento electrónico
+     * Pertenece al grupo de datos generales
+     * 
+     * <gDatRec>
+     *           <iNatRec>1</iNatRec>
+     *           <iTiOpe>1</iTiOpe>
+     *           <cPaisRec>PRY</cPaisRec>
+     *           <dDesPaisRe>Paraguay</dDesPaisRe>
+     *           <iTiContRec>2</iTiContRec>
+     *           <dRucRec>00000002</dRucRec>
+     *           <dDVRec>7</dDVRec>
+     *           <dNomRec>RECEPTOR DEL DOCUMENTO</dNomRec>
+     *           <dDirRec>CALLE 1 ENTRE CALLE 2 Y CALLE 3</dDirRec>
+     *           <dNumCasRec>123</dNumCasRec>
+     *           <cDepRec>1</cDepRec>
+     *           <dDesDepRec>CAPITAL</dDesDepRec>
+     *           <cDisRec>1</cDisRec>
+     *           <dDesDisRec>ASUNCION (DISTRITO)</dDesDisRec>
+     *           <cCiuRec>1</cCiuRec>
+     *           <dDesCiuRec>ASUNCION (DISTRITO)</dDesCiuRec>
+     *           <dTelRec>012123456</dTelRec>
+     *           <dCodCliente>AAA</dCodCliente>
+     *       </gDatRec>
+     * 
+     * @param params 
+     * @param data  
+     */
+    private function generateDatosGeneralesReceptorDE($params, $data) {
+      $ConstantService = new ConstantService();
+      $paises = $ConstantService->getPaises();
+      $tiposDocumentosReceptor = $ConstantService->getTiposDocumentosReceptor();
+      $departamentos = $ConstantService->getDepartamentos();
+      $distritos = $ConstantService->getDistritos();
+      $ciudades = $ConstantService->getCiudades();
+
+      foreach ($paises as $um) {
+        if ($um['codigo'] === $data[0]['cliente']['pais']) {
+            $um['descripcion'];
+          break;
+        }
+      }     
+
+      $json = [
+        'iNatRec' => $data[0]['cliente']['contribuyente'] ? 1 : 2,
+        'iTiOpe' => $data[0]['cliente']['tipoOperacion'],
+        'cPaisRec' => $data[0]['cliente']['pais'],
+        'dDesPaisRe' => $um['descripcion'],      
+      ];
+
+      if ($data[0]['cliente']['contribuyente']) {
+        $json['iTiContRec'] = $data[0]['cliente']['tipoContribuyente'];
+        $ruccli = explode('-', $data[0]['cliente']['ruc']);
+        $json['dRucRec'] = TRIM($ruccli[0]);
+        $json['dDVRec'] = TRIM($ruccli[1]);
+      }
+
+      if (!$data[0]['cliente']['contribuyente'] && isset($data[0]['cliente']['tipoOperacion'])) {
+        //Obligatorio completar D210
+
+        if (isset($data[0]['cliente']['documentoTipo'])) {
+          $json['iTipIDRec'] = $data[0]['cliente']['documentoTipo'];
+          $json['dDTipIDRec'] = array_filter($tiposDocumentosReceptor, function ($td) use ($data) {
+            return $td['codigo'] === $data[0]['cliente']['documentoTipo'];
+          })[0]['descripcion'];
+        }
+
+        if ($data[0]['cliente']['documentoTipo'] === 9) {
+          $json['dDTipIDRec'] = $data[0]['cliente']['documentoTipoDescripcion'];
+        }
+
+        $json['dNumIDRec'] = TRIM($data[0]['cliente']['documentoNumero']);
+
+        if ($data[0]['cliente']['documentoTipo'] === 5) {
+          // Si es innominado completar con cero
+          $json['dNumIDRec'] = '0';
+        }
+        
+      }
+
+      $json['dNomRec'] = TRIM($data[0]['cliente']['razonSocial']);
+
+      if ($data[0]['cliente']['documentoTipo'] === 5) {
+        $json['dNomRec'] = 'Sin Nombre';
+      }
+
+      if ($data[0]['cliente']['nombreFantasia']) {
+        $json['dNomFanRec'] = TRIM($data[0]['cliente']['nombreFantasia']);
+      }
+
+      if ($data[0]['cliente']['direccion']) {
+        //eliminar los espacios
+        $json['dDirRec'] = TRIM($data[0]['cliente']['direccion']);
+      }
+
+      if ($data[0]['cliente']['numeroCasa']) {
+        $json['dNumCasRec'] = TRIM($data[0]['cliente']['numeroCasa']);
+      }
+
+      if ($data[0]['cliente']['direccion'] && $data[0]['cliente']['tipoOperacion'] != 4) {
+        $json['cDepRec'] = $data[0]['cliente']['departamento'];        
+        foreach ($departamentos as $um) {
+          if ($um['codigo'] === $data[0]['cliente']['departamento']) {
+            $json['dDesDepRec'] = $um['descripcion'];
+            break;
+          }
+        }
+        $json['cDisRec'] = $data[0]['cliente']['distrito'];
+        foreach ($distritos as $um) {
+          if ($um['codigo'] === $data[0]['cliente']['distrito']) {
+            $json['dDesDisRec'] = $um['descripcion'];
+            break;
+          }
+        }
+        $json['cCiuRec'] = $data[0]['cliente']['ciudad'];
+        foreach ($ciudades as $um) {
+          if ($um['codigo'] === $data[0]['cliente']['ciudad']) {
+            $json['dDesCiuRec'] = $um['descripcion'];
+            break;
+          }
+        }        
+      }
+
+      if ($data[0]['cliente']['telefono']) {
+        $json['dTelRec'] = TRIM($data[0]['cliente']['telefono']);
+      }
+
+      if ($data[0]['cliente']['celular']) {
+        $json['dCelRec'] = TRIM($data[0]['cliente']['celular']);
+      }
+
+      if ($data[0]['cliente']['email']) {
+        $email = $data[0]['cliente']['email']; //Hace una copia, para no alterar.
+  
+        //Verificar si tiene varios correos.
+        if (strpos($email, ',') > -1) {
+          //Si el Email tiene , (coma) entonces va enviar solo el primer valor, ya que la SET no acepta Comas
+          $email = explode(',', $email)[0];
+        }
+
+        $json['dEmailRec'] = TRIM($email);
+      }
+  
+      if ($data[0]['cliente']['codigo']) {
+        $json['dCodCliente'] = TRIM($data[0]['cliente']['codigo']);
+      }
+  
+
+      
+
+
+
+      return $json;
+
+  }
+
+  
+  
+
+
+
+  
 
     
 
@@ -843,8 +1338,8 @@ class JSonDeMainService {
     private function addDefaultValues(&$data) {   
 
       // Suponiendo que la clase ConstantService tiene un método getTiposDocumentos() que devuelve el array tiposDocumentos
-      $constanteServiceInstance = new ConstantService();
-      $tiposDocumentos = $constanteServiceInstance->getTiposDocumentos();
+      $ConstantService = new ConstantService();
+      $tiposDocumentos = $ConstantService->getTiposDocumentos();
 
       $success = false;
       foreach ($tiposDocumentos as $um) {
